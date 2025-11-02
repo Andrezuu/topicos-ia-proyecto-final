@@ -1,0 +1,36 @@
+# --- Python basics ---
+__pycache__/
+*.py[cod]
+*$py.class
+
+# --- Virtual environments ---
+.venv/
+venv/
+
+# --- Local environment files (secrets) ---
+.env
+
+# --- Test, cache and tooling ---
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+.cache/
+.coverage
+.coverage.*
+htmlcov/
+
+# --- Build artifacts ---
+build/
+dist/
+*.egg-info/
+*.egg
+
+# --- Editors/IDE ---
+.vscode/
+.idea/
+
+# --- OS junk ---
+.DS_Store
+Thumbs.db
+
+# Nota: uv.lock se DEBE versionar (no lo ignores)
