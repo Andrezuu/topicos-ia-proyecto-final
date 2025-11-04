@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Food Analyzer Agent - Agente Inteligente con DSPy</title>
+    <title>Food Analyzer Agent</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -11,611 +11,295 @@
         <h1>🧠 Food Analyzer Agent</h1>
         <p class="subtitle">Agente inteligente con DSPy para análisis de comida</p>
         
-        <!-- Tabs Navigation -->
         <div class="tabs">
             <button class="tab active" onclick="switchTab('analyze')">🍽️ Analizar</button>
-            <button class="tab" onclick="switchTab('substitutes')">🔄 Sustitutos</button>
             <button class="tab" onclick="switchTab('nutrition')">🥗 Nutrición</button>
             <button class="tab" onclick="switchTab('compare')">⚖️ Comparar</button>
         </div>
-        
-        <!-- Tab 1: Analizar Imagen -->
+
+        <!-- Tab 1: Analizar -->
         <div id="analyze-tab" class="tab-content active">
             <div class="upload-area" id="uploadArea">
-                <p style="font-size: 48px; margin-bottom: 10px;">📸</p>
-                <p style="color: #666; font-size: 18px;">Haz clic o arrastra una imagen aquí</p>
-                <p style="color: #999; font-size: 14px; margin-top: 10px;">JPG, PNG o JPEG</p>
+                📸 Haz clic o arrastra una imagen aquí
                 <input type="file" id="fileInput" accept="image/*">
             </div>
-            
-            <div class="preview" id="preview" style="display: none;">
-                <img id="previewImage" src="" alt="Preview">
-            </div>
-            
+            <img id="previewImage" style="display:none;">
             <button class="btn" id="analyzeBtn" disabled>Analizar Comida</button>
-            
-            <div id="loading" style="display: none;" class="loading">
+            <div id="loading" class="loading" style="display:none;">
                 <div class="spinner"></div>
-                <p style="margin-top: 20px; color: #667eea;">Analizando imagen...</p>
+                Analizando imagen...
             </div>
-            
-            <div id="error" style="display: none;" class="error"></div>
-            
-            <div id="results" style="display: none;" class="results">
+            <div id="error" class="error" style="display:none;"></div>
+            <div id="results" class="results" style="display:none;">
                 <h2 id="plateName"></h2>
-                
                 <h3>📝 Ingredientes</h3>
                 <ul id="ingredientsList"></ul>
-                
                 <h3>👨‍🍳 Pasos de preparación</h3>
                 <ol id="stepsList"></ol>
-                
                 <h3>💡 Datos curiosos</h3>
                 <ul id="curiositiesList"></ul>
             </div>
         </div>
-        
-        <!-- Tab 2: Sustitutos de Ingredientes -->
-        <div id="substitutes-tab" class="tab-content">
-            <h2>🔄 Buscar Sustitutos de Ingredientes</h2>
-            <input type="text" id="substituteIngredient" placeholder="Ej: leche, huevo, mantequilla">
-            <input type="text" id="substituteContext" placeholder="Contexto opcional (vegano, sin gluten, etc.)">
-            <button class="btn" onclick="findSubstitutes()">Buscar Sustitutos</button>
-            <div id="substituteLoading" style="display: none;" class="loading">
-                <div class="spinner"></div>
-                <p style="margin-top: 20px; color: #667eea;">Buscando sustitutos...</p>
-            </div>
-            <div id="substituteError" style="display: none;" class="error"></div>
-            <div id="substituteResult"></div>
-        </div>
-        
-        <!-- Tab 3: Información Nutricional -->
+
+        <!-- Tab 3: Nutrición -->
         <div id="nutrition-tab" class="tab-content">
             <h2>🥗 Calcular Información Nutricional</h2>
             <input type="text" id="nutritionDish" placeholder="Nombre del plato">
-            <button class="btn-secondary" onclick="useLastIngredients()">Usar ingredientes del último análisis</button>
-            <textarea id="nutritionIngredients" placeholder="Ingredientes (opcional, uno por línea)" rows="4"></textarea>
+            <textarea id="nutritionIngredients" placeholder="Ingredientes (uno por línea, opcional)" rows="5"></textarea>
             <button class="btn" onclick="calculateNutrition()">Calcular Nutrición</button>
-            <div id="nutritionLoading" style="display: none;" class="loading">
+            <div id="nutritionLoading" class="loading" style="display:none;">
                 <div class="spinner"></div>
-                <p style="margin-top: 20px; color: #667eea;">Calculando nutrición...</p>
+                Calculando información nutricional...
             </div>
-            <div id="nutritionError" style="display: none;" class="error"></div>
+            <div id="nutritionError" class="error" style="display:none;"></div>
             <div id="nutritionResult"></div>
         </div>
-        
-        <!-- Tab 4: Comparar Platos -->
+
+        <!-- Tab 4: Comparar -->
         <div id="compare-tab" class="tab-content">
-            <h2>⚖️ Comparar Dos Platos Guardados</h2>
-            <p style="color: #666; margin-bottom: 20px;">Selecciona dos análisis guardados para comparar</p>
-            
-            <button class="btn-secondary" onclick="loadAnalysesForComparison()">🔄 Cargar Análisis Guardados</button>
-            
-            <div style="display: flex; gap: 20px; margin-top: 20px;">
-                <div style="flex: 1;">
-                    <h3>Plato 1</h3>
-                    <select id="analysis1Select" style="width: 100%; padding: 12px; border: 2px solid #e0e0e0; border-radius: 8px; font-size: 16px;">
-                        <option value="">Selecciona un plato...</option>
-                    </select>
-                    <div id="analysis1Preview" style="margin-top: 10px; padding: 10px; background: #f9f9f9; border-radius: 5px; display: none;"></div>
-                </div>
-                
-                <div style="flex: 1;">
-                    <h3>Plato 2</h3>
-                    <select id="analysis2Select" style="width: 100%; padding: 12px; border: 2px solid #e0e0e0; border-radius: 8px; font-size: 16px;">
-                        <option value="">Selecciona un plato...</option>
-                    </select>
-                    <div id="analysis2Preview" style="margin-top: 10px; padding: 10px; background: #f9f9f9; border-radius: 5px; display: none;"></div>
-                </div>
-            </div>
-            
-            <button class="btn" onclick="compareDishes()" style="margin-top: 20px;">Comparar Platos</button>
-            <div id="compareLoading" style="display: none;" class="loading">
+            <h2>⚖️ Comparar Platos Guardados</h2>
+            <p style="color: #666; margin-bottom: 20px;">Selecciona dos análisis guardados para compararlos</p>
+            <button class="btn-secondary" onclick="loadAnalysesForComparison()">🔄 Cargar Análisis Disponibles</button>
+            <select id="analysis1Select"><option value="">Selecciona Plato 1...</option></select>
+            <div id="analysis1Preview" style="display:none;"></div>
+            <select id="analysis2Select"><option value="">Selecciona Plato 2...</option></select>
+            <div id="analysis2Preview" style="display:none;"></div>
+            <button class="btn" onclick="compareDishes()">Comparar Platos</button>
+            <div id="compareLoading" class="loading" style="display:none;">
                 <div class="spinner"></div>
-                <p style="margin-top: 20px; color: #667eea;">Comparando platos...</p>
+                Comparando platos...
             </div>
-            <div id="compareError" style="display: none;" class="error"></div>
+            <div id="compareError" class="error" style="display:none;"></div>
             <div id="compareResult"></div>
         </div>
     </div>
-    
+
     <script>
-        const uploadArea = document.getElementById('uploadArea');
-        const fileInput = document.getElementById('fileInput');
-        const preview = document.getElementById('preview');
-        const previewImage = document.getElementById('previewImage');
-        const analyzeBtn = document.getElementById('analyzeBtn');
-        const loading = document.getElementById('loading');
-        const error = document.getElementById('error');
-        const results = document.getElementById('results');
-        
+        const API = 'http://localhost:8000';
         let selectedFile = null;
-        let lastAnalysisData = null; // Guardar último análisis para reutilizar ingredientes
-        
-        // Función para cambiar de tab
-        function switchTab(tabName) {
-            // Ocultar todos los tabs
-            document.querySelectorAll('.tab-content').forEach(tab => {
-                tab.classList.remove('active');
-            });
-            document.querySelectorAll('.tab').forEach(tab => {
-                tab.classList.remove('active');
-            });
-            
-            // Mostrar tab seleccionado
-            document.getElementById(tabName + '-tab').classList.add('active');
+        let availableAnalyses = [];
+
+        function switchTab(name) {
+            document.querySelectorAll('.tab-content, .tab').forEach(el => el.classList.remove('active'));
+            document.getElementById(name + '-tab').classList.add('active');
             event.target.classList.add('active');
         }
-        
-        // Click to upload
-        uploadArea.addEventListener('click', () => fileInput.click());
-        
-        // Drag and drop
-        uploadArea.addEventListener('dragover', (e) => {
-            e.preventDefault();
-            uploadArea.classList.add('dragging');
-        });
-        
-        uploadArea.addEventListener('dragleave', () => {
-            uploadArea.classList.remove('dragging');
-        });
-        
-        uploadArea.addEventListener('drop', (e) => {
-            e.preventDefault();
-            uploadArea.classList.remove('dragging');
-            const files = e.dataTransfer.files;
-            if (files.length > 0) {
-                handleFile(files[0]);
+
+        // TAB 1: ANALIZAR
+        document.getElementById('uploadArea').onclick = () => document.getElementById('fileInput').click();
+        document.getElementById('fileInput').onchange = (e) => {
+            selectedFile = e.target.files[0];
+            if (selectedFile) {
+                const reader = new FileReader();
+                reader.onload = (ev) => {
+                    const img = document.getElementById('previewImage');
+                    img.src = ev.target.result;
+                    img.style.display = 'block';
+                };
+                reader.readAsDataURL(selectedFile);
+                document.getElementById('analyzeBtn').disabled = false;
             }
-        });
-        
-        fileInput.addEventListener('change', (e) => {
-            if (e.target.files.length > 0) {
-                handleFile(e.target.files[0]);
-            }
-        });
-        
-        function handleFile(file) {
-            if (!file.type.startsWith('image/')) {
-                showError('Por favor selecciona una imagen válida');
-                return;
-            }
+        };
+
+        document.getElementById('analyzeBtn').onclick = async () => {
+            const loading = document.getElementById('loading');
+            const error = document.getElementById('error');
+            const results = document.getElementById('results');
             
-            selectedFile = file;
-            
-            // Show preview
-            const reader = new FileReader();
-            reader.onload = (e) => {
-                previewImage.src = e.target.result;
-                preview.style.display = 'block';
-                analyzeBtn.disabled = false;
-                results.style.display = 'none';
-                error.style.display = 'none';
-            };
-            reader.readAsDataURL(file);
-        }
-        
-        analyzeBtn.addEventListener('click', async () => {
-            if (!selectedFile) return;
-            
-            // Hide previous results and errors
-            results.style.display = 'none';
-            error.style.display = 'none';
             loading.style.display = 'block';
-            analyzeBtn.disabled = true;
-            
-            const formData = new FormData();
-            formData.append('file', selectedFile);
-            
+            error.style.display = 'none';
+            results.style.display = 'none';
+
             try {
-                const response = await fetch('http://localhost:8000/analyze_food', {
-                    method: 'POST',
-                    body: formData
-                });
-                
-                if (!response.ok) {
-                    throw new Error(`Error ${response.status}: ${response.statusText}`);
-                }
-                
-                const data = await response.json();
+                const formData = new FormData();
+                formData.append('file', selectedFile);
+                const res = await fetch(`${API}/analyze_food`, { method: 'POST', body: formData });
+                const data = await res.json();
                 console.log(data);
                 
-                // Guardar datos para usar en otros tabs
-                lastAnalysisData = data;
-                
-                displayResults(data);
-                
+
+                document.getElementById('plateName').textContent = data.nombre_plato;
+                document.getElementById('ingredientsList').innerHTML = data.receta.ingredientes.map(i => `<li>${i}</li>`).join('');
+                document.getElementById('stepsList').innerHTML = data.receta.pasos.map(p => `<li>${p}</li>`).join('');
+                document.getElementById('curiositiesList').innerHTML = data.datos_curiosos.map(c => `<li>${c}</li>`).join('');
+                results.style.display = 'block';
             } catch (err) {
-                showError(`Error al analizar: ${err.message}. Asegúrate de que el servidor esté corriendo en http://localhost:8000`);
-            } finally {
-                loading.style.display = 'none';
-                analyzeBtn.disabled = false;
-            }
-        });
-        
-        function displayResults(data) {
-            document.getElementById('plateName').textContent = data.nombre_plato;
-            
-            // Ingredientes
-            const ingredientsList = document.getElementById('ingredientsList');
-            ingredientsList.innerHTML = '';
-            data.receta.ingredientes.forEach(ing => {
-                const li = document.createElement('li');
-                li.textContent = ing;
-                ingredientsList.appendChild(li);
-            });
-            
-            // Pasos
-            const stepsList = document.getElementById('stepsList');
-            stepsList.innerHTML = '';
-            data.receta.pasos.forEach(paso => {
-                const li = document.createElement('li');
-                li.textContent = paso;
-                li.style.marginBottom = '10px';
-                stepsList.appendChild(li);
-            });
-            
-            // Curiosidades
-            const curiositiesList = document.getElementById('curiositiesList');
-            curiositiesList.innerHTML = '';
-            data.datos_curiosos.forEach(dato => {
-                const li = document.createElement('li');
-                li.textContent = dato;
-                curiositiesList.appendChild(li);
-            });
-            
-            results.style.display = 'block';
-        }
-        
-        function showError(message) {
-            error.textContent = message;
-            error.style.display = 'block';
-        }
-        
-        // ============= TAB 2: SUSTITUTOS =============
-        async function findSubstitutes() {
-            const ingredient = document.getElementById('substituteIngredient').value.trim();
-            const context = document.getElementById('substituteContext').value.trim();
-            const loading = document.getElementById('substituteLoading');
-            const errorDiv = document.getElementById('substituteError');
-            const resultDiv = document.getElementById('substituteResult');
-            
-            if (!ingredient) {
-                errorDiv.textContent = 'Por favor ingresa un ingrediente';
-                errorDiv.style.display = 'block';
-                return;
-            }
-            
-            loading.style.display = 'block';
-            errorDiv.style.display = 'none';
-            resultDiv.innerHTML = '';
-            
-            try {
-                let url = `http://localhost:8000/substitutes?ingredient=${encodeURIComponent(ingredient)}`;
-                if (context) {
-                    url += `&context=${encodeURIComponent(context)}`;
-                }
-                
-                const response = await fetch(url);
-                if (!response.ok) throw new Error(`Error ${response.status}`);
-                
-                const data = await response.json();
-                
-                let html = `
-                    <div class="results">
-                        <h3>🔄 Sustitutos para: ${data.ingredient}</h3>
-                        ${data.category ? `<p><strong>Categoría:</strong> ${data.category}</p>` : ''}
-                        <ul>
-                `;
-                
-                data.substitutes.forEach(sub => {
-                    html += `
-                        <li>
-                            <strong>${sub.name}</strong><br>
-                            <em style="color: #666;">Razón: ${sub.reason}</em>
-                        </li>
-                    `;
-                });
-                
-                html += `
-                        </ul>
-                        <p style="margin-top: 15px; color: #666;">
-                            <strong>Fuente:</strong> 
-                            <span class="source-badge source-${data.source}">${data.source}</span>
-                        </p>
-                `;
-                
-                if (data.agent_reasoning) {
-                    html += `
-                        <details class="agent-reasoning">
-                            <summary>🧠 Ver razonamiento del agente</summary>
-                            <p style="margin-top: 10px;">${data.agent_reasoning}</p>
-                        </details>
-                    `;
-                }
-                
-                html += `</div>`;
-                resultDiv.innerHTML = html;
-                
-            } catch (err) {
-                errorDiv.textContent = `Error: ${err.message}`;
-                errorDiv.style.display = 'block';
+                error.textContent = 'Error: ' + err.message;
+                error.style.display = 'block';
             } finally {
                 loading.style.display = 'none';
             }
-        }
-        
-        // ============= TAB 3: NUTRICIÓN =============
-        function useLastIngredients() {
-            if (!lastAnalysisData) {
-                alert('Primero analiza una imagen en el tab "Analizar"');
-                return;
-            }
-            
-            const ingredients = lastAnalysisData.receta.ingredientes.join('\n');
-            document.getElementById('nutritionIngredients').value = ingredients;
-            document.getElementById('nutritionDish').value = lastAnalysisData.nombre_plato;
-        }
-        
+        };
+
+        // TAB 3: NUTRICIÓN
         async function calculateNutrition() {
-            const dishName = document.getElementById('nutritionDish').value.trim();
-            const ingredientsText = document.getElementById('nutritionIngredients').value.trim();
+            const dish = document.getElementById('nutritionDish').value;
+            const ingredients = document.getElementById('nutritionIngredients').value.split('\n').filter(i => i.trim());
             const loading = document.getElementById('nutritionLoading');
-            const errorDiv = document.getElementById('nutritionError');
-            const resultDiv = document.getElementById('nutritionResult');
-            
-            if (!dishName) {
-                errorDiv.textContent = 'Por favor ingresa el nombre del plato';
-                errorDiv.style.display = 'block';
+            const error = document.getElementById('nutritionError');
+            const result = document.getElementById('nutritionResult');
+
+            if (!dish) {
+                error.textContent = 'Por favor ingresa el nombre del plato';
+                error.style.display = 'block';
                 return;
             }
-            
+
             loading.style.display = 'block';
-            errorDiv.style.display = 'none';
-            resultDiv.innerHTML = '';
-            
+            error.style.display = 'none';
+            result.innerHTML = '';
+
             try {
-                let url = `http://localhost:8000/nutrition/${encodeURIComponent(dishName)}`;
-                
-                if (ingredientsText) {
-                    const ingredients = ingredientsText.split('\n')
-                        .map(i => i.trim())
-                        .filter(i => i.length > 0)
-                        .join(',');
-                    url += `?ingredients=${encodeURIComponent(ingredients)}`;
-                }
-                
-                const response = await fetch(url);
-                if (!response.ok) throw new Error(`Error ${response.status}`);
-                
-                const data = await response.json();
-                
+                const url = `${API}/nutrition/${encodeURIComponent(dish)}${ingredients.length ? '?ingredients=' + encodeURIComponent(ingredients.join(',')) : ''}`;
+                const res = await fetch(url);
+                const data = await res.json();
+
+                const n = data.nutrition;
                 let html = `
                     <div class="results">
-                        <h3>🥗 Información Nutricional: ${data.dish_name}</h3>
-                        <table style="width: 100%; border-collapse: collapse; margin: 20px 0;">
-                            <tr style="background: #f0f0f0;">
-                                <th style="padding: 10px; text-align: left;">Nutriente</th>
-                                <th style="padding: 10px; text-align: right;">Valor</th>
-                            </tr>
-                            <tr>
-                                <td style="padding: 10px;">🍽️ Porción</td>
-                                <td style="padding: 10px; text-align: right;">${data.nutrition.serving_size || 'N/A'}</td>
-                            </tr>
-                            <tr style="background: #f9f9f9;">
-                                <td style="padding: 10px;">🔥 Calorías</td>
-                                <td style="padding: 10px; text-align: right;">${data.nutrition.calories || 'N/A'} kcal</td>
-                            </tr>
-                            <tr>
-                                <td style="padding: 10px;">🥩 Proteínas</td>
-                                <td style="padding: 10px; text-align: right;">${data.nutrition.proteins || 'N/A'}g</td>
-                            </tr>
-                            <tr style="background: #f9f9f9;">
-                                <td style="padding: 10px;">🍞 Carbohidratos</td>
-                                <td style="padding: 10px; text-align: right;">${data.nutrition.carbs || 'N/A'}g</td>
-                            </tr>
-                            <tr>
-                                <td style="padding: 10px;">🧈 Grasas</td>
-                                <td style="padding: 10px; text-align: right;">${data.nutrition.fats || 'N/A'}g</td>
-                            </tr>
-                            <tr style="background: #f9f9f9;">
-                                <td style="padding: 10px;">🌾 Fibra</td>
-                                <td style="padding: 10px; text-align: right;">${data.nutrition.fiber || 'N/A'}g</td>
-                            </tr>
-                        </table>
-                        ${data.nutrition.notes ? `<p style="color: #666;"><em>${data.nutrition.notes}</em></p>` : ''}
-                        <p style="margin-top: 15px; color: #666;">
-                            <strong>Fuente:</strong> 
-                            <span class="source-badge source-${data.source}">${data.source}</span>
-                        </p>
-                `;
+                        <h2>Información Nutricional</h2>
+                        <h3>🍽️ ${dish}</h3>
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin: 20px 0;">
+                            <div style="background: white; padding: 15px; border-radius: 10px; border-left: 4px solid #667eea;">
+                                <p style="color: #666; font-size: 0.9em; margin-bottom: 5px;">Calorías</p>
+                                <p style="font-size: 1.5em; font-weight: bold; color: #667eea;">${n.calories}</p>
+                            </div>
+                            <div style="background: white; padding: 15px; border-radius: 10px; border-left: 4px solid #764ba2;">
+                                <p style="color: #666; font-size: 0.9em; margin-bottom: 5px;">Proteínas</p>
+                                <p style="font-size: 1.5em; font-weight: bold; color: #764ba2;">${n.protein}</p>
+                            </div>
+                            <div style="background: white; padding: 15px; border-radius: 10px; border-left: 4px solid #ff6b6b;">
+                                <p style="color: #666; font-size: 0.9em; margin-bottom: 5px;">Carbohidratos</p>
+                                <p style="font-size: 1.5em; font-weight: bold; color: #ff6b6b;">${n.carbohydrates}</p>
+                            </div>
+                            <div style="background: white; padding: 15px; border-radius: 10px; border-left: 4px solid #feca57;">
+                                <p style="color: #666; font-size: 0.9em; margin-bottom: 5px;">Grasas</p>
+                                <p style="font-size: 1.5em; font-weight: bold; color: #feca57;">${n.fats}</p>
+                            </div>
+                        </div>
+                        <p><b>🌾 Fibra:</b> ${n.fiber}</p>
+                        <p><b>Tamaño de la porcion:</b> ${n.serving_size}</p>`;
                 
                 if (data.agent_reasoning) {
-                    html += `
-                        <details class="agent-reasoning">
-                            <summary>🧠 Ver razonamiento del agente</summary>
-                            <p style="margin-top: 10px;">${data.agent_reasoning}</p>
-                        </details>
-                    `;
+                    html += `<details class="agent-reasoning">
+                        <summary>🧠 Ver razonamiento del agente</summary>
+                        <p style="margin-top: 10px;">${data.agent_reasoning}</p>
+                    </details>`;
                 }
-                
-                html += `</div>`;
-                resultDiv.innerHTML = html;
-                
+                html += '</div>';
+                result.innerHTML = html;
             } catch (err) {
-                errorDiv.textContent = `Error: ${err.message}`;
-                errorDiv.style.display = 'block';
+                error.textContent = 'Error: ' + err.message;
+                error.style.display = 'block';
             } finally {
                 loading.style.display = 'none';
             }
         }
-        
-        // ============= TAB 4: COMPARAR =============
-        let availableAnalyses = [];
-        
+
+        // TAB 4: COMPARAR
         async function loadAnalysesForComparison() {
             try {
-                const response = await fetch('http://localhost:8000/history?limit=50');
-                if (!response.ok) throw new Error(`Error ${response.status}`);
-                
-                const data = await response.json();
+                const res = await fetch(`${API}/history?limit=50`);
+                const data = await res.json();
                 availableAnalyses = data.history;
-                
+
                 const select1 = document.getElementById('analysis1Select');
                 const select2 = document.getElementById('analysis2Select');
                 
-                // Limpiar selects
-                select1.innerHTML = '<option value="">Selecciona un plato...</option>';
-                select2.innerHTML = '<option value="">Selecciona un plato...</option>';
+                select1.innerHTML = '<option value="">Plato 1...</option>';
+                select2.innerHTML = '<option value="">Plato 2...</option>';
                 
-                // Llenar con opciones
-                availableAnalyses.forEach(analysis => {
-                    const option1 = document.createElement('option');
-                    option1.value = analysis.id;
-                    option1.textContent = `${analysis.dish_name} (ID: ${analysis.id})`;
-                    select1.appendChild(option1);
-                    
-                    const option2 = document.createElement('option');
-                    option2.value = analysis.id;
-                    option2.textContent = `${analysis.dish_name} (ID: ${analysis.id})`;
-                    select2.appendChild(option2);
+                availableAnalyses.forEach(a => {
+                    select1.innerHTML += `<option value="${a.id}">${a.dish_name} (ID:${a.id})</option>`;
+                    select2.innerHTML += `<option value="${a.id}">${a.dish_name} (ID:${a.id})</option>`;
                 });
                 
-                alert(`✅ ${availableAnalyses.length} análisis cargados`);
-                
             } catch (err) {
-                alert(`Error al cargar análisis: ${err.message}`);
+                alert('Error: ' + err.message);
             }
         }
-        
-        // Preview al seleccionar
+
         document.addEventListener('DOMContentLoaded', () => {
-            const select1 = document.getElementById('analysis1Select');
-            const select2 = document.getElementById('analysis2Select');
-            
-            // Cargar análisis disponibles
             loadAnalysesForComparison();
             
-            select1?.addEventListener('change', (e) => {
-                const preview = document.getElementById('analysis1Preview');
-                const analysis = availableAnalyses.find(a => a.id == e.target.value);
-                if (analysis) {
-                    preview.innerHTML = `<strong>${analysis.dish_name}</strong><br><small>Ingredientes: ${analysis.ingredients.join(', ')}</small>`;
-                    preview.style.display = 'block';
-                } else {
-                    preview.style.display = 'none';
-                }
-            });
-            
-            select2?.addEventListener('change', (e) => {
-                const preview = document.getElementById('analysis2Preview');
-                const analysis = availableAnalyses.find(a => a.id == e.target.value);
-                if (analysis) {
-                    preview.innerHTML = `<strong>${analysis.dish_name}</strong><br><small>Ingredientes: ${analysis.ingredients.join(', ')}</small>`;
-                    preview.style.display = 'block';
-                } else {
-                    preview.style.display = 'none';
-                }
+            ['analysis1Select', 'analysis2Select'].forEach((id, idx) => {
+                document.getElementById(id).onchange = (e) => {
+                    const preview = document.getElementById(id.replace('Select', 'Preview'));
+                    const analysis = availableAnalyses.find(a => a.id == e.target.value);
+                    if (analysis) {
+                        preview.innerHTML = `<b>${analysis.dish_name}</b><br><small>${analysis.ingredients.join(', ')}</small>`;
+                        preview.style.display = 'block';
+                    } else {
+                        preview.style.display = 'none';
+                    }
+                };
             });
         });
-        
+
         async function compareDishes() {
-            const analysis1Id = document.getElementById('analysis1Select').value;
-            const analysis2Id = document.getElementById('analysis2Select').value;
+            const id1 = document.getElementById('analysis1Select').value;
+            const id2 = document.getElementById('analysis2Select').value;
             const loading = document.getElementById('compareLoading');
-            const errorDiv = document.getElementById('compareError');
-            const resultDiv = document.getElementById('compareResult');
-            
-            if (!analysis1Id || !analysis2Id) {
-                errorDiv.textContent = 'Por favor selecciona ambos platos';
-                errorDiv.style.display = 'block';
+            const error = document.getElementById('compareError');
+            const result = document.getElementById('compareResult');
+
+            if (!id1 || !id2) {
+                error.textContent = 'Selecciona ambos platos';
+                error.style.display = 'block';
                 return;
             }
-            
-            if (analysis1Id === analysis2Id) {
-                errorDiv.textContent = 'Debes seleccionar dos platos diferentes';
-                errorDiv.style.display = 'block';
+            if (id1 === id2) {
+                error.textContent = 'Deben ser diferentes';
+                error.style.display = 'block';
                 return;
             }
-            
+
             loading.style.display = 'block';
-            errorDiv.style.display = 'none';
-            resultDiv.innerHTML = '';
-            
+            error.style.display = 'none';
+            result.innerHTML = '';
+
             try {
-                const url = `http://localhost:8000/compare?analysis_id1=${analysis1Id}&analysis_id2=${analysis2Id}`;
-                
-                const response = await fetch(url);
-                if (!response.ok) throw new Error(`Error ${response.status}`);
-                
-                const data = await response.json();
-                const comp = data.comparison;
-                
-                let html = `
+                const res = await fetch(`${API}/compare?analysis_id1=${id1}&analysis_id2=${id2}`);
+                const data = await res.json();
+                const c = data.comparison;
+
+                result.innerHTML = `
                     <div class="results">
-                        <h3>⚖️ Comparación</h3>
-                        <div style="display: flex; gap: 20px; margin-bottom: 20px;">
-                            <div style="flex: 1; background: #f0f0f0; padding: 15px; border-radius: 8px;">
-                                <h4>${data.dish1.name}</h4>
-                                <p style="color: #666; font-size: 14px;">ID: ${data.dish1.id}</p>
-                                <small>${data.dish1.ingredients.join(', ')}</small>
+                        <h2>⚖️ Comparación de Platos</h2>
+                        <div style="display: flex; gap: 20px; margin: 20px 0; flex-wrap: wrap;">
+                            <div style="flex: 1; min-width: 250px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 20px; border-radius: 15px; color: white;">
+                                <h3 style="color: white; margin: 0 0 10px 0;">${data.dish1.name}</h3>
+                                <p style="font-size: 0.9em; opacity: 0.9;">ID: ${data.dish1.id}</p>
+                                <p style="font-size: 0.9em; opacity: 0.9;">${data.dish1.ingredients.join(', ')}</p>
                             </div>
-                            <div style="flex: 1; background: #f0f0f0; padding: 15px; border-radius: 8px;">
-                                <h4>${data.dish2.name}</h4>
-                                <p style="color: #666; font-size: 14px;">ID: ${data.dish2.id}</p>
-                                <small>${data.dish2.ingredients.join(', ')}</small>
+                            <div style="flex: 1; min-width: 250px; background: linear-gradient(135deg, #764ba2 0%, #667eea 100%); padding: 20px; border-radius: 15px; color: white;">
+                                <h3 style="color: white; margin: 0 0 10px 0;">${data.dish2.name}</h3>
+                                <p style="font-size: 0.9em; opacity: 0.9;">ID: ${data.dish2.id}</p>
+                                <p style="font-size: 0.9em; opacity: 0.9;">${data.dish2.ingredients.join(', ')}</p>
                             </div>
                         </div>
                         
-                        <div style="background: #f0f0f0; padding: 15px; border-radius: 8px; margin: 15px 0;">
-                            <h4>📊 Similitud: ${comp.similarity_score || 'N/A'}%</h4>
+                        <div style="background: white; padding: 20px; border-radius: 15px; text-align: center; margin: 20px 0; border: 3px solid #667eea;">
+                            <p style="color: #666; font-size: 0.9em; margin-bottom: 5px;">Similitud</p>
+                            <p style="font-size: 3em; font-weight: bold; color: #667eea; margin: 0;">${c.similarity_score}%</p>
                         </div>
                         
-                        <h4>🍳 Relación Culinaria</h4>
-                        <p style="white-space: pre-wrap;">${comp.culinary_relationship || 'N/A'}</p>
+                        <h3>🍳 Relación Culinaria</h3>
+                        <p style="white-space: pre-wrap; line-height: 1.6;">${c.culinary_relationship}</p>
                         
-                        <h4>🌍 Contexto Cultural</h4>
-                        <p style="white-space: pre-wrap;">${comp.cultural_context || 'N/A'}</p>
+                        <h3>🌍 Contexto Cultural</h3>
+                        <p style="white-space: pre-wrap; line-height: 1.6;">${c.cultural_context}</p>
                         
-                        <h4>🔍 Diferencias Clave</h4>
-                        <ul>
-                `;
-                
-                if (comp.key_differences && Array.isArray(comp.key_differences)) {
-                    comp.key_differences.forEach(diff => {
-                        html += `<li>${diff}</li>`;
-                    });
-                } else if (typeof comp.key_differences === 'string') {
-                    // Si es un string, intentar dividir por saltos de línea o guiones
-                    const diffs = comp.key_differences.split('\n').filter(d => d.trim());
-                    diffs.forEach(diff => {
-                        html += `<li>${diff.replace(/^[-•]\s*/, '')}</li>`;
-                    });
-                }
-                
-                html += `
-                        </ul>
-                        <p style="margin-top: 15px; color: #666;">
-                            <strong>Fuente:</strong> 
-                            <span class="source-badge source-${data.source}">${data.source}</span>
-                        </p>
-                `;
-                
-                if (data.agent_reasoning) {
-                    html += `
-                        <details class="agent-reasoning">
-                            <summary>🧠 Ver razonamiento del agente</summary>
-                            <p style="margin-top: 10px; white-space: pre-wrap;">${data.agent_reasoning}</p>
-                        </details>
-                    `;
-                }
-                
-                html += `</div>`;
-                resultDiv.innerHTML = html;
-                
+                        ${data.agent_reasoning ? `
+                            <details class="agent-reasoning">
+                                <summary>🧠 Ver razonamiento del agente</summary>
+                                <p style="margin-top: 10px; white-space: pre-wrap;">${data.agent_reasoning}</p>
+                            </details>
+                        ` : ''}
+                    </div>`;
             } catch (err) {
-                errorDiv.textContent = `Error: ${err.message}`;
-                errorDiv.style.display = 'block';
+                error.textContent = 'Error: ' + err.message;
+                error.style.display = 'block';
             } finally {
                 loading.style.display = 'none';
             }

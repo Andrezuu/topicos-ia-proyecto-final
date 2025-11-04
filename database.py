@@ -11,13 +11,6 @@ import hashlib
 
 
 def setup_database() -> sqlite3.Connection:
-    """
-    Creates a SQLite database for the Food Analyzer Agent with tables:
-    - food_analyses: stores complete food analysis results
-    - substitutes_cache: caches ingredient substitutes
-    - nutrition_cache: caches nutrition calculations
-    - comparisons_cache: caches dish comparisons
-    """
     conn = sqlite3.connect("food_analyzer.db", check_same_thread=False)
     conn.row_factory = sqlite3.Row  # Allow accessing columns by name
     cursor = conn.cursor()
@@ -35,12 +28,6 @@ def setup_database() -> sqlite3.Connection:
         );
     """)
 
-    # Create indexes for faster queries
-    cursor.execute("""
-        CREATE INDEX IF NOT EXISTS idx_dish_name 
-        ON food_analyses(dish_name);
-    """)
-
     conn.commit()
     return conn
 
@@ -50,20 +37,6 @@ def setup_database() -> sqlite3.Connection:
 def save_analysis(conn: sqlite3.Connection, dish_name: str, ingredients: List[str],
                   recipe_steps: List[str], fun_facts: List[str],
                   image_hash: str = None) -> int:
-    """
-    Save a food analysis to the database.
-    
-    Args:
-        conn: Database connection
-        dish_name: Name of the dish
-        ingredients: List of ingredients
-        recipe_steps: List of recipe steps
-        fun_facts: List of fun facts
-        image_hash: Optional hash of the image
-    
-    Returns:
-        ID of the inserted record
-    """
     cursor = conn.cursor()
     cursor.execute("""
         INSERT INTO food_analyses (dish_name, ingredients, recipe_steps, fun_facts, image_hash)
@@ -80,16 +53,6 @@ def save_analysis(conn: sqlite3.Connection, dish_name: str, ingredients: List[st
 
 
 def get_analysis_history(conn: sqlite3.Connection, limit: int = 10) -> List[Dict]:
-    """
-    Get recent analysis history.
-    
-    Args:
-        conn: Database connection
-        limit: Maximum number of records to return
-    
-    Returns:
-        List of analysis records
-    """
     cursor = conn.cursor()
     cursor.execute("""
         SELECT id, dish_name, ingredients, created_at
@@ -110,16 +73,6 @@ def get_analysis_history(conn: sqlite3.Connection, limit: int = 10) -> List[Dict
 
 
 def get_analysis_by_id(conn: sqlite3.Connection, analysis_id: int) -> Optional[Dict]:
-    """
-    Get a specific analysis by ID.
-    
-    Args:
-        conn: Database connection
-        analysis_id: ID of the analysis
-    
-    Returns:
-        Analysis record or None
-    """
     cursor = conn.cursor()
     cursor.execute("""
         SELECT * FROM food_analyses WHERE id = ?
@@ -139,15 +92,6 @@ def get_analysis_by_id(conn: sqlite3.Connection, analysis_id: int) -> Optional[D
 
 
 def get_all_analyses(conn: sqlite3.Connection) -> List[Dict]:
-    """
-    Get all food analyses (simplified for comparison).
-    
-    Args:
-        conn: Database connection
-    
-    Returns:
-        List of all analyses with id, dish_name, and ingredients
-    """
     cursor = conn.cursor()
     cursor.execute("""
         SELECT id, dish_name, ingredients, created_at
@@ -166,7 +110,6 @@ def get_all_analyses(conn: sqlite3.Connection) -> List[Dict]:
     return results
 
 
-# Solo guardamos análisis de comida, no cache de otras operaciones
 
 # Initialize database on import
 if __name__ != "__main__":

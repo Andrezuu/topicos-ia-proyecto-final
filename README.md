@@ -11,10 +11,10 @@ API para analizar imágenes de comida y obtener recetas y datos curiosos usando 
 ## Instalación
 
 1. Asegúrate de tener `uv` instalado
-2. Navega al directorio del proyecto:
+2. Clona el proyecto
 
 ```powershell
-cd h:\Andres\1Universidad\2025\topicos-ia\ai-topics-2-2025\2.tools
+git clone https://github.com/Andrezuu/topicos-ia-proyecto-final.git
 ```
 
 3. Sincroniza las dependencias con uv:
@@ -23,7 +23,7 @@ cd h:\Andres\1Universidad\2025\topicos-ia\ai-topics-2-2025\2.tools
 uv sync
 ```
 
-4. Crea un archivo `.env` en `2.tools/2.1.fastapi/` con tu clave de OpenAI:
+4. Crea un archivo `.env` en la raiz del proyecto con tu clave de OpenAI:
 
 ```
 OPENAI_API_KEY=sk-tu-clave-aqui
@@ -33,16 +33,10 @@ OPENAI_API_KEY=sk-tu-clave-aqui
 
 ### Ejecutar el servidor
 
-Desde el directorio `2.tools`:
+Desde la raíz del proyecto:
 
 ```powershell
-uv run python 2.1.fastapi/food_analyzer_api.py
-```
-
-O usando uvicorn directamente:
-
-```powershell
-uv run uvicorn 2.1.fastapi.food_analyzer_api:app --reload --port 8000
+uv run python food_analyzer_api.py
 ```
 
 El servidor estará disponible en `http://localhost:8000`

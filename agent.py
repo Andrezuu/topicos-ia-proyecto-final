@@ -23,19 +23,6 @@ class AnalyzeFoodImageSignature(dspy.Signature):
     fun_facts: List[str] = dspy.OutputField(desc="3-5 datos curiosos sobre el plato")
 
 
-class FindIngredientSubstitutesSignature(dspy.Signature):
-    """
-    Encuentra sustitutos adecuados para un ingrediente de cocina considerando restricciones dietéticas,
-    disponibilidad y compatibilidad culinaria.
-    """
-    ingredient: str = dspy.InputField(desc="El ingrediente para el cual buscar sustitutos")
-    context: str = dspy.InputField(desc="Contexto adicional (restricciones dietéticas, tipo de cocina, etc.)")
-    category: str = dspy.OutputField(desc="Categoría del ingrediente (lácteos, proteína, vegetal, etc.)")
-    substitutes: List[Dict[str, str]] = dspy.OutputField(
-        desc="Lista de sustitutos con 'name' (nombre) y 'reason' (razón) para cada uno"
-    )
-
-
 class CalculateNutritionSignature(dspy.Signature):
     """
     Calcula información nutricional para un plato basándose en sus ingredientes.
@@ -65,30 +52,15 @@ class CompareDishesSignature(dspy.Signature):
 # ============= AGENT MODULE =============
 
 class FoodAnalyzerAgent(dspy.Module):
-    """
-    Main Food Analyzer Agent using DSPy Chain-of-Thought reasoning.
-    Provides intelligent food analysis, substitutes, nutrition, and comparisons.
-    """
     
     def __init__(self):
         super().__init__()
         
         self.analyze_food = dspy.ChainOfThought(AnalyzeFoodImageSignature)
-        self.find_substitutes = dspy.ChainOfThought(FindIngredientSubstitutesSignature)
         self.calculate_nutrition = dspy.ChainOfThought(CalculateNutritionSignature)
         self.compare_dishes = dspy.ChainOfThought(CompareDishesSignature)
     
     def analyze_image(self, image_base64: str, context: str = "") -> Dict[str, Any]:
-        """
-        Analyze a food image using GPT-4 Vision + DSPy reasoning.
-        
-        Args:
-            image_base64: Base64 encoded image
-            context: Optional context about the image
-        
-        Returns:
-            Dictionary with analysis results and agent reasoning
-        """
         try:
             client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
             
@@ -161,61 +133,9 @@ Responde en formato JSON con esta estructura exacta:
                 "error": str(e)
             }
     
-    def get_substitutes(self, ingredient: str, context: str = "") -> Dict[str, Any]:
-        """
-        Find ingredient substitutes using Chain-of-Thought reasoning.
-        
-        Args:
-            ingredient: Ingredient to find substitutes for
-            context: Additional context (dietary restrictions, etc.)
-        
-        Returns:
-            Dictionary with substitutes and reasoning
-        """
-        try:
-            prediction = self.find_substitutes(ingredient=ingredient, context=context)
-            
-            # Parse the prediction
-            category = prediction.category if hasattr(prediction, 'category') else "general"
-            
-            # Handle substitutes parsing
-            if hasattr(prediction, 'substitutes'):
-                if isinstance(prediction.substitutes, list):
-                    substitutes = prediction.substitutes
-                else:
-                    # Try to parse as JSON string
-                    try:
-                        substitutes = json.loads(prediction.substitutes)
-                    except:
-                        substitutes = []
-            else:
-                substitutes = []
-            
-            return {
-                "success": True,
-                "ingredient": ingredient,
-                "category": category,
-                "substitutes": substitutes,
-                "agent_reasoning": prediction.rationale if hasattr(prediction, 'rationale') else None
-            }
-            
-        except Exception as e:
-            return {
-                "success": False,
-                "error": str(e)
-            }
+    
     
     def get_nutrition(self, dish_name: str, ingredients: List[str] = None) -> Dict[str, Any]:
-        """
-        Calculate nutrition using Chain-of-Thought reasoning.
-        
-        Args:
-            dish_name: Name of the dish
-            ingredients: Optional list of ingredients
-        
-        Returns:
-            Dictionary with nutrition data and reasoning
-        """
         try:
             ingredients_str = ", ".join(ingredients) if ingredients else "standard ingredients"
             
@@ -251,18 +171,6 @@ Responde en formato JSON con esta estructura exacta:
     
     def compare(self, dish1_name: str, dish1_ingredients: List[str],
                 dish2_name: str, dish2_ingredients: List[str]) -> Dict[str, Any]:
-        """
-        Compare two dishes using Chain-of-Thought reasoning.
-        
-        Args:
-            dish1_name: Name of first dish
-            dish1_ingredients: Ingredients of first dish
-            dish2_name: Name of second dish
-            dish2_ingredients: Ingredients of second dish
-        
-        Returns:
-            Dictionary with comparison and reasoning
-        """
         try:
             prediction = self.compare_dishes(
                 dish1_name=dish1_name,
@@ -271,7 +179,6 @@ Responde en formato JSON con esta estructura exacta:
                 dish2_ingredients=", ".join(dish2_ingredients)
             )
             
-            # Parse comparison data
             if hasattr(prediction, 'comparison'):
                 if isinstance(prediction.comparison, dict):
                     comparison = prediction.comparison
@@ -296,16 +203,10 @@ Responde en formato JSON con esta estructura exacta:
             }
 
 
-# ============= AGENT INITIALIZATION =============
-
-# Global agent instance (singleton pattern)
+#SINGLETON
 _agent_instance = None
 
 def get_agent() -> FoodAnalyzerAgent:
-    """
-    Get or create the Food Analyzer Agent instance.
-    Uses singleton pattern to avoid multiple initializations.
-    """
     global _agent_instance
     
     if _agent_instance is None:
@@ -314,7 +215,6 @@ def get_agent() -> FoodAnalyzerAgent:
         if not api_key:
             raise ValueError("OPENAI_API_KEY not found in environment variables")
         
-        # Initialize DSPy with GPT-4o-mini
         lm = dspy.LM('openai/gpt-4o-mini', api_key=api_key)
         dspy.configure(lm=lm)
         
@@ -324,14 +224,7 @@ def get_agent() -> FoodAnalyzerAgent:
     return _agent_instance
 
 
-# Test function
 if __name__ == "__main__":
     print("🧠 Food Analyzer Agent - DSPy")
-    print("=" * 50)
-    
     agent = get_agent()
     
-    # Test substitutes
-    print("\n🔄 Testing Substitutes...")
-    result = agent.get_substitutes("leche", context="sin lactosa")
-    print(json.dumps(result, indent=2, ensure_ascii=False))
