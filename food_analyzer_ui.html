@@ -3,206 +3,105 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Food Analyzer - Analizador de Comida con IA</title>
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-        
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            min-height: 100vh;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            padding: 20px;
-        }
-        
-        .container {
-            background: white;
-            border-radius: 20px;
-            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
-            max-width: 800px;
-            width: 100%;
-            padding: 40px;
-        }
-        
-        h1 {
-            color: #333;
-            margin-bottom: 10px;
-            text-align: center;
-        }
-        
-        .subtitle {
-            color: #666;
-            text-align: center;
-            margin-bottom: 30px;
-        }
-        
-        .upload-area {
-            border: 3px dashed #667eea;
-            border-radius: 10px;
-            padding: 40px;
-            text-align: center;
-            cursor: pointer;
-            transition: all 0.3s;
-            margin-bottom: 20px;
-        }
-        
-        .upload-area:hover {
-            border-color: #764ba2;
-            background: #f8f9ff;
-        }
-        
-        .upload-area.dragging {
-            background: #e8eaff;
-            border-color: #764ba2;
-        }
-        
-        input[type="file"] {
-            display: none;
-        }
-        
-        .btn {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            border: none;
-            padding: 15px 40px;
-            border-radius: 50px;
-            font-size: 16px;
-            font-weight: bold;
-            cursor: pointer;
-            width: 100%;
-            transition: transform 0.2s;
-        }
-        
-        .btn:hover {
-            transform: translateY(-2px);
-        }
-        
-        .btn:disabled {
-            opacity: 0.6;
-            cursor: not-allowed;
-        }
-        
-        .preview {
-            margin: 20px 0;
-            text-align: center;
-        }
-        
-        .preview img {
-            max-width: 100%;
-            max-height: 300px;
-            border-radius: 10px;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.2);
-        }
-        
-        .results {
-            margin-top: 30px;
-            padding: 20px;
-            background: #f8f9ff;
-            border-radius: 10px;
-        }
-        
-        .results h2 {
-            color: #667eea;
-            margin-bottom: 15px;
-        }
-        
-        .results h3 {
-            color: #764ba2;
-            margin-top: 20px;
-            margin-bottom: 10px;
-        }
-        
-        .results ul {
-            list-style: none;
-            padding-left: 0;
-        }
-        
-        .results li {
-            padding: 8px 0;
-            padding-left: 25px;
-            position: relative;
-        }
-        
-        .results li:before {
-            content: "•";
-            color: #667eea;
-            font-weight: bold;
-            position: absolute;
-            left: 0;
-        }
-        
-        .loading {
-            text-align: center;
-            padding: 40px;
-        }
-        
-        .spinner {
-            border: 4px solid #f3f3f3;
-            border-top: 4px solid #667eea;
-            border-radius: 50%;
-            width: 50px;
-            height: 50px;
-            animation: spin 1s linear infinite;
-            margin: 0 auto;
-        }
-        
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
-        
-        .error {
-            background: #fee;
-            border: 2px solid #f88;
-            color: #c33;
-            padding: 15px;
-            border-radius: 10px;
-            margin: 20px 0;
-        }
-    </style>
+    <title>Food Analyzer Agent - Agente Inteligente con DSPy</title>
+    <link rel="stylesheet" href="style.css">
 </head>
 <body>
     <div class="container">
-        <h1>🍽️ Food Analyzer</h1>
-        <p class="subtitle">Analiza tu comida con Inteligencia Artificial</p>
+        <h1>🧠 Food Analyzer Agent</h1>
+        <p class="subtitle">Agente inteligente con DSPy para análisis de comida</p>
         
-        <div class="upload-area" id="uploadArea">
-            <p style="font-size: 48px; margin-bottom: 10px;">📸</p>
-            <p style="color: #666; font-size: 18px;">Haz clic o arrastra una imagen aquí</p>
-            <p style="color: #999; font-size: 14px; margin-top: 10px;">JPG, PNG o JPEG</p>
-            <input type="file" id="fileInput" accept="image/*">
+        <!-- Tabs Navigation -->
+        <div class="tabs">
+            <button class="tab active" onclick="switchTab('analyze')">🍽️ Analizar</button>
+            <button class="tab" onclick="switchTab('substitutes')">🔄 Sustitutos</button>
+            <button class="tab" onclick="switchTab('nutrition')">🥗 Nutrición</button>
+            <button class="tab" onclick="switchTab('compare')">⚖️ Comparar</button>
         </div>
         
-        <div class="preview" id="preview" style="display: none;">
-            <img id="previewImage" src="" alt="Preview">
+        <!-- Tab 1: Analizar Imagen -->
+        <div id="analyze-tab" class="tab-content active">
+            <div class="upload-area" id="uploadArea">
+                <p style="font-size: 48px; margin-bottom: 10px;">📸</p>
+                <p style="color: #666; font-size: 18px;">Haz clic o arrastra una imagen aquí</p>
+                <p style="color: #999; font-size: 14px; margin-top: 10px;">JPG, PNG o JPEG</p>
+                <input type="file" id="fileInput" accept="image/*">
+            </div>
+            
+            <div class="preview" id="preview" style="display: none;">
+                <img id="previewImage" src="" alt="Preview">
+            </div>
+            
+            <button class="btn" id="analyzeBtn" disabled>Analizar Comida</button>
+            
+            <div id="loading" style="display: none;" class="loading">
+                <div class="spinner"></div>
+                <p style="margin-top: 20px; color: #667eea;">Analizando imagen...</p>
+            </div>
+            
+            <div id="error" style="display: none;" class="error"></div>
+            
+            <div id="results" style="display: none;" class="results">
+                <h2 id="plateName"></h2>
+                
+                <h3>📝 Ingredientes</h3>
+                <ul id="ingredientsList"></ul>
+                
+                <h3>👨‍🍳 Pasos de preparación</h3>
+                <ol id="stepsList"></ol>
+                
+                <h3>💡 Datos curiosos</h3>
+                <ul id="curiositiesList"></ul>
+            </div>
         </div>
         
-        <button class="btn" id="analyzeBtn" disabled>Analizar Comida</button>
-        
-        <div id="loading" style="display: none;" class="loading">
-            <div class="spinner"></div>
-            <p style="margin-top: 20px; color: #667eea;">Analizando imagen...</p>
+        <!-- Tab 2: Sustitutos de Ingredientes -->
+        <div id="substitutes-tab" class="tab-content">
+            <h2>🔄 Buscar Sustitutos de Ingredientes</h2>
+            <input type="text" id="substituteIngredient" placeholder="Ej: leche, huevo, mantequilla">
+            <input type="text" id="substituteContext" placeholder="Contexto opcional (vegano, sin gluten, etc.)">
+            <button class="btn" onclick="findSubstitutes()">Buscar Sustitutos</button>
+            <div id="substituteLoading" style="display: none;" class="loading">
+                <div class="spinner"></div>
+                <p style="margin-top: 20px; color: #667eea;">Buscando sustitutos...</p>
+            </div>
+            <div id="substituteError" style="display: none;" class="error"></div>
+            <div id="substituteResult"></div>
         </div>
         
-        <div id="error" style="display: none;" class="error"></div>
+        <!-- Tab 3: Información Nutricional -->
+        <div id="nutrition-tab" class="tab-content">
+            <h2>🥗 Calcular Información Nutricional</h2>
+            <input type="text" id="nutritionDish" placeholder="Nombre del plato">
+            <button class="btn-secondary" onclick="useLastIngredients()">Usar ingredientes del último análisis</button>
+            <textarea id="nutritionIngredients" placeholder="Ingredientes (opcional, uno por línea)" rows="4"></textarea>
+            <button class="btn" onclick="calculateNutrition()">Calcular Nutrición</button>
+            <div id="nutritionLoading" style="display: none;" class="loading">
+                <div class="spinner"></div>
+                <p style="margin-top: 20px; color: #667eea;">Calculando nutrición...</p>
+            </div>
+            <div id="nutritionError" style="display: none;" class="error"></div>
+            <div id="nutritionResult"></div>
+        </div>
         
-        <div id="results" style="display: none;" class="results">
-            <h2 id="plateName"></h2>
+        <!-- Tab 4: Comparar Platos -->
+        <div id="compare-tab" class="tab-content">
+            <h2>⚖️ Comparar Dos Platos</h2>
+            <h3>Plato 1</h3>
+            <input type="text" id="dish1Name" placeholder="Nombre del primer plato">
+            <textarea id="dish1Ingredients" placeholder="Ingredientes (separados por coma)" rows="3"></textarea>
             
-            <h3>📝 Ingredientes</h3>
-            <ul id="ingredientsList"></ul>
+            <h3>Plato 2</h3>
+            <input type="text" id="dish2Name" placeholder="Nombre del segundo plato">
+            <textarea id="dish2Ingredients" placeholder="Ingredientes (separados por coma)" rows="3"></textarea>
             
-            <h3>👨‍🍳 Pasos de preparación</h3>
-            <ol id="stepsList"></ol>
-            
-            <h3>💡 Datos curiosos</h3>
-            <ul id="curiositiesList"></ul>
+            <button class="btn" onclick="compareDishes()">Comparar Platos</button>
+            <div id="compareLoading" style="display: none;" class="loading">
+                <div class="spinner"></div>
+                <p style="margin-top: 20px; color: #667eea;">Comparando platos...</p>
+            </div>
+            <div id="compareError" style="display: none;" class="error"></div>
+            <div id="compareResult"></div>
         </div>
     </div>
     
@@ -217,6 +116,22 @@
         const results = document.getElementById('results');
         
         let selectedFile = null;
+        let lastAnalysisData = null; // Guardar último análisis para reutilizar ingredientes
+        
+        // Función para cambiar de tab
+        function switchTab(tabName) {
+            // Ocultar todos los tabs
+            document.querySelectorAll('.tab-content').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            document.querySelectorAll('.tab').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            
+            // Mostrar tab seleccionado
+            document.getElementById(tabName + '-tab').classList.add('active');
+            event.target.classList.add('active');
+        }
         
         // Click to upload
         uploadArea.addEventListener('click', () => fileInput.click());
@@ -290,6 +205,10 @@
                 
                 const data = await response.json();
                 console.log(data);
+                
+                // Guardar datos para usar en otros tabs
+                lastAnalysisData = data;
+                
                 displayResults(data);
                 
             } catch (err) {
@@ -337,6 +256,271 @@
         function showError(message) {
             error.textContent = message;
             error.style.display = 'block';
+        }
+        
+        // ============= TAB 2: SUSTITUTOS =============
+        async function findSubstitutes() {
+            const ingredient = document.getElementById('substituteIngredient').value.trim();
+            const context = document.getElementById('substituteContext').value.trim();
+            const loading = document.getElementById('substituteLoading');
+            const errorDiv = document.getElementById('substituteError');
+            const resultDiv = document.getElementById('substituteResult');
+            
+            if (!ingredient) {
+                errorDiv.textContent = 'Por favor ingresa un ingrediente';
+                errorDiv.style.display = 'block';
+                return;
+            }
+            
+            loading.style.display = 'block';
+            errorDiv.style.display = 'none';
+            resultDiv.innerHTML = '';
+            
+            try {
+                let url = `http://localhost:8000/substitutes?ingredient=${encodeURIComponent(ingredient)}`;
+                if (context) {
+                    url += `&context=${encodeURIComponent(context)}`;
+                }
+                
+                const response = await fetch(url);
+                if (!response.ok) throw new Error(`Error ${response.status}`);
+                
+                const data = await response.json();
+                
+                let html = `
+                    <div class="results">
+                        <h3>🔄 Sustitutos para: ${data.ingredient}</h3>
+                        ${data.category ? `<p><strong>Categoría:</strong> ${data.category}</p>` : ''}
+                        <ul>
+                `;
+                
+                data.substitutes.forEach(sub => {
+                    html += `
+                        <li>
+                            <strong>${sub.name}</strong><br>
+                            <em style="color: #666;">Razón: ${sub.reason}</em>
+                        </li>
+                    `;
+                });
+                
+                html += `
+                        </ul>
+                        <p style="margin-top: 15px; color: #666;">
+                            <strong>Fuente:</strong> 
+                            <span class="source-badge source-${data.source}">${data.source}</span>
+                        </p>
+                `;
+                
+                if (data.agent_reasoning) {
+                    html += `
+                        <details class="agent-reasoning">
+                            <summary>🧠 Ver razonamiento del agente</summary>
+                            <p style="margin-top: 10px;">${data.agent_reasoning}</p>
+                        </details>
+                    `;
+                }
+                
+                html += `</div>`;
+                resultDiv.innerHTML = html;
+                
+            } catch (err) {
+                errorDiv.textContent = `Error: ${err.message}`;
+                errorDiv.style.display = 'block';
+            } finally {
+                loading.style.display = 'none';
+            }
+        }
+        
+        // ============= TAB 3: NUTRICIÓN =============
+        function useLastIngredients() {
+            if (!lastAnalysisData) {
+                alert('Primero analiza una imagen en el tab "Analizar"');
+                return;
+            }
+            
+            const ingredients = lastAnalysisData.receta.ingredientes.join('\n');
+            document.getElementById('nutritionIngredients').value = ingredients;
+            document.getElementById('nutritionDish').value = lastAnalysisData.nombre_plato;
+        }
+        
+        async function calculateNutrition() {
+            const dishName = document.getElementById('nutritionDish').value.trim();
+            const ingredientsText = document.getElementById('nutritionIngredients').value.trim();
+            const loading = document.getElementById('nutritionLoading');
+            const errorDiv = document.getElementById('nutritionError');
+            const resultDiv = document.getElementById('nutritionResult');
+            
+            if (!dishName) {
+                errorDiv.textContent = 'Por favor ingresa el nombre del plato';
+                errorDiv.style.display = 'block';
+                return;
+            }
+            
+            loading.style.display = 'block';
+            errorDiv.style.display = 'none';
+            resultDiv.innerHTML = '';
+            
+            try {
+                let url = `http://localhost:8000/nutrition/${encodeURIComponent(dishName)}`;
+                
+                if (ingredientsText) {
+                    const ingredients = ingredientsText.split('\n')
+                        .map(i => i.trim())
+                        .filter(i => i.length > 0)
+                        .join(',');
+                    url += `?ingredients=${encodeURIComponent(ingredients)}`;
+                }
+                
+                const response = await fetch(url);
+                if (!response.ok) throw new Error(`Error ${response.status}`);
+                
+                const data = await response.json();
+                
+                let html = `
+                    <div class="results">
+                        <h3>🥗 Información Nutricional: ${data.dish_name}</h3>
+                        <table style="width: 100%; border-collapse: collapse; margin: 20px 0;">
+                            <tr style="background: #f0f0f0;">
+                                <th style="padding: 10px; text-align: left;">Nutriente</th>
+                                <th style="padding: 10px; text-align: right;">Valor</th>
+                            </tr>
+                            <tr>
+                                <td style="padding: 10px;">🍽️ Porción</td>
+                                <td style="padding: 10px; text-align: right;">${data.nutrition.serving_size || 'N/A'}</td>
+                            </tr>
+                            <tr style="background: #f9f9f9;">
+                                <td style="padding: 10px;">🔥 Calorías</td>
+                                <td style="padding: 10px; text-align: right;">${data.nutrition.calories || 'N/A'} kcal</td>
+                            </tr>
+                            <tr>
+                                <td style="padding: 10px;">🥩 Proteínas</td>
+                                <td style="padding: 10px; text-align: right;">${data.nutrition.proteins || 'N/A'}g</td>
+                            </tr>
+                            <tr style="background: #f9f9f9;">
+                                <td style="padding: 10px;">🍞 Carbohidratos</td>
+                                <td style="padding: 10px; text-align: right;">${data.nutrition.carbs || 'N/A'}g</td>
+                            </tr>
+                            <tr>
+                                <td style="padding: 10px;">🧈 Grasas</td>
+                                <td style="padding: 10px; text-align: right;">${data.nutrition.fats || 'N/A'}g</td>
+                            </tr>
+                            <tr style="background: #f9f9f9;">
+                                <td style="padding: 10px;">🌾 Fibra</td>
+                                <td style="padding: 10px; text-align: right;">${data.nutrition.fiber || 'N/A'}g</td>
+                            </tr>
+                        </table>
+                        ${data.nutrition.notes ? `<p style="color: #666;"><em>${data.nutrition.notes}</em></p>` : ''}
+                        <p style="margin-top: 15px; color: #666;">
+                            <strong>Fuente:</strong> 
+                            <span class="source-badge source-${data.source}">${data.source}</span>
+                        </p>
+                `;
+                
+                if (data.agent_reasoning) {
+                    html += `
+                        <details class="agent-reasoning">
+                            <summary>🧠 Ver razonamiento del agente</summary>
+                            <p style="margin-top: 10px;">${data.agent_reasoning}</p>
+                        </details>
+                    `;
+                }
+                
+                html += `</div>`;
+                resultDiv.innerHTML = html;
+                
+            } catch (err) {
+                errorDiv.textContent = `Error: ${err.message}`;
+                errorDiv.style.display = 'block';
+            } finally {
+                loading.style.display = 'none';
+            }
+        }
+        
+        // ============= TAB 4: COMPARAR =============
+        async function compareDishes() {
+            const dish1Name = document.getElementById('dish1Name').value.trim();
+            const dish1Ingredients = document.getElementById('dish1Ingredients').value.trim();
+            const dish2Name = document.getElementById('dish2Name').value.trim();
+            const dish2Ingredients = document.getElementById('dish2Ingredients').value.trim();
+            const loading = document.getElementById('compareLoading');
+            const errorDiv = document.getElementById('compareError');
+            const resultDiv = document.getElementById('compareResult');
+            
+            if (!dish1Name || !dish1Ingredients || !dish2Name || !dish2Ingredients) {
+                errorDiv.textContent = 'Por favor completa todos los campos';
+                errorDiv.style.display = 'block';
+                return;
+            }
+            
+            loading.style.display = 'block';
+            errorDiv.style.display = 'none';
+            resultDiv.innerHTML = '';
+            
+            try {
+                const url = `http://localhost:8000/compare?` +
+                    `dish1_name=${encodeURIComponent(dish1Name)}&` +
+                    `dish1_ingredients=${encodeURIComponent(dish1Ingredients)}&` +
+                    `dish2_name=${encodeURIComponent(dish2Name)}&` +
+                    `dish2_ingredients=${encodeURIComponent(dish2Ingredients)}`;
+                
+                const response = await fetch(url);
+                if (!response.ok) throw new Error(`Error ${response.status}`);
+                
+                const data = await response.json();
+                const comp = data.comparison;
+                
+                let html = `
+                    <div class="results">
+                        <h3>⚖️ Comparación: ${dish1Name} vs ${dish2Name}</h3>
+                        
+                        <div style="background: #f0f0f0; padding: 15px; border-radius: 8px; margin: 15px 0;">
+                            <h4>📊 Similitud: ${comp.similarity_score || 'N/A'}%</h4>
+                        </div>
+                        
+                        <h4>🍳 Relación Culinaria</h4>
+                        <p>${comp.culinary_relationship || 'N/A'}</p>
+                        
+                        <h4>🌍 Contexto Cultural</h4>
+                        <p>${comp.cultural_context || 'N/A'}</p>
+                        
+                        <h4>🔍 Diferencias Clave</h4>
+                        <ul>
+                `;
+                
+                if (comp.key_differences && Array.isArray(comp.key_differences)) {
+                    comp.key_differences.forEach(diff => {
+                        html += `<li>${diff}</li>`;
+                    });
+                } else if (typeof comp.key_differences === 'string') {
+                    html += `<li>${comp.key_differences}</li>`;
+                }
+                
+                html += `
+                        </ul>
+                        <p style="margin-top: 15px; color: #666;">
+                            <strong>Fuente:</strong> 
+                            <span class="source-badge source-${data.source}">${data.source}</span>
+                        </p>
+                `;
+                
+                if (data.agent_reasoning) {
+                    html += `
+                        <details class="agent-reasoning">
+                            <summary>🧠 Ver razonamiento del agente</summary>
+                            <p style="margin-top: 10px;">${data.agent_reasoning}</p>
+                        </details>
+                    `;
+                }
+                
+                html += `</div>`;
+                resultDiv.innerHTML = html;
+                
+            } catch (err) {
+                errorDiv.textContent = `Error: ${err.message}`;
+                errorDiv.style.display = 'block';
+            } finally {
+                loading.style.display = 'none';
+            }
         }
     </script>
 </body>

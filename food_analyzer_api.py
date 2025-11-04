@@ -4,25 +4,26 @@ from fastapi import FastAPI, UploadFile, File, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from PIL import Image, UnidentifiedImageError
-from openai import OpenAI
 from dotenv import load_dotenv
+from agent import get_agent
+from tools import get_ingredient_substitutes, calculate_nutrition, compare_dishes
 
-# Cargar variables de entorno (.env)
 load_dotenv()
 
-app = FastAPI(title="Food Analyzer API")
+app = FastAPI(
+    title="Food Analyzer Agent API",
+    version="3.0.0",
+    description="API con agente inteligente DSPy para análisis de comida"
+)
 
 # Configurar CORS para permitir cualquier origen
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # Permite todos los orígenes
+    allow_origins=["*"],  
     allow_credentials=True,
-    allow_methods=["*"],  # Permite todos los métodos (GET, POST, etc.)
-    allow_headers=["*"],  # Permite todos los headers
+    allow_methods=["*"],  
+    allow_headers=["*"],  
 )
-
-# Inicializar cliente OpenAI (lee OPENAI_API_KEY del .env)
-client = OpenAI()
 
 
 class Recipe(BaseModel):
@@ -46,7 +47,6 @@ async def analyze_food(file: UploadFile = File(...)):
     - Receta (ingredientes y pasos)
     - Datos curiosos
     """
-    # Validar que sea una imagen
     if not file.content_type or not file.content_type.startswith("image/"):
         raise HTTPException(
             status_code=415, 
@@ -54,7 +54,6 @@ async def analyze_food(file: UploadFile = File(...)):
         )
     
     try:
-        # Leer la imagen
         img_bytes = await file.read()
         img_stream = io.BytesIO(img_bytes)
         img_obj = Image.open(img_stream)
@@ -68,81 +67,110 @@ async def analyze_food(file: UploadFile = File(...)):
             detail="No se pudo procesar la imagen"
         )
     
-    # Convertir imagen a base64 para enviar a OpenAI
+    # Convertir imagen a base64
     img_stream.seek(0)
     base64_image = base64.b64encode(img_stream.read()).decode('utf-8')
     
-    # Construir el prompt para OpenAI
-    prompt = """
-    Analiza esta imagen de comida y proporciona la siguiente información en formato JSON:
-    Muchas de las imagenes seran sobre comida tradicional de diferentes culturas.
-    
-    {
-        "nombre_plato": "nombre del plato identificado",
-        "receta": {
-            "ingredientes": ["ingrediente 1", "ingrediente 2", ...],
-            "pasos": ["paso 1", "paso 2", ...]
-        },
-        "datos_curiosos": ["dato curioso 1", "dato curioso 2", "dato curioso 3"]
-    }
-    
-    Si no puedes identificar el plato exacto, da tu mejor estimación basada en lo que ves.
-    Proporciona al menos 3 datos curiosos sobre el plato o sus ingredientes.
-    Responde ÚNICAMENTE con el JSON, sin texto adicional.
-    """
-    
     try:
-        # Llamar a la API de OpenAI con visión
-        response = client.chat.completions.create(
-            model="gpt-4o-mini",
-            messages=[
-                {
-                    "role": "user",
-                    "content": [
-                        {
-                            "type": "text",
-                            "text": prompt
-                        },
-                        {
-                            "type": "image_url",
-                            "image_url": {
-                                "url": f"data:image/jpeg;base64,{base64_image}"
-                            }
-                        }
-                    ]
-                }
-            ],
-            temperature=0.7,
-            max_tokens=1000
-        )
+        # Usar el agente DSPy para análisis inteligente
+        agent = get_agent()
+        context = "Analiza esta imagen de comida. Muchas imágenes serán sobre comida tradicional de diferentes culturas."
         
-        # Extraer la respuesta
-        content = response.choices[0].message.content
+        agent_result = agent.analyze_image(base64_image, context=context)
         
-        # Intentar parsear el JSON de la respuesta
-        import json
-        # Limpiar la respuesta si viene con markdown
-        if "```json" in content:
-            content = content.split("```json")[1].split("```")[0].strip()
-        elif "```" in content:
-            content = content.split("```")[1].split("```")[0].strip()
+        if not agent_result["success"]:
+            raise HTTPException(
+                status_code=500,
+                detail=f"Error del agente: {agent_result.get('error', 'Unknown error')}"
+            )
         
-        result = json.loads(content)
-        
-        # Validar y retornar usando el modelo Pydantic
+        # Retornar resultado estructurado
         return FoodAnalysisResponse(
-            nombre_plato=result["nombre_plato"],
+            nombre_plato=agent_result["dish_name"],
             receta=Recipe(
-                ingredientes=result["receta"]["ingredientes"],
-                pasos=result["receta"]["pasos"]
+                ingredientes=agent_result["ingredients"],
+                pasos=agent_result["recipe_steps"]
             ),
-            datos_curiosos=result["datos_curiosos"]
+            datos_curiosos=agent_result["fun_facts"]
         )
         
+    except HTTPException:
+        raise
     except Exception as e:
         raise HTTPException(
             status_code=500,
-            detail=f"Error al analizar la imagen con OpenAI: {str(e)}"
+            detail=f"Error al analizar la imagen: {str(e)}"
+        )
+
+
+@app.get("/substitutes")
+async def get_substitutes(ingredient: str, context: str = ""):
+    """
+    Obtiene sustitutos para un ingrediente usando el agente.
+    
+    Args:
+        ingredient: Ingrediente a sustituir
+        context: Contexto adicional (vegano, sin gluten, etc.)
+    """
+    try:
+        result = get_ingredient_substitutes(ingredient, context)
+        return result
+    except Exception as e:
+        raise HTTPException(
+            status_code=500,
+            detail=f"Error al buscar sustitutos: {str(e)}"
+        )
+
+
+@app.get("/nutrition/{dish_name}")
+async def get_nutrition(dish_name: str, ingredients: str = None):
+    """
+    Calcula información nutricional para un plato usando el agente.
+    
+    Args:
+        dish_name: Nombre del plato
+        ingredients: Lista de ingredientes separados por coma (opcional)
+    """
+    try:
+        ingredient_list = ingredients.split(",") if ingredients else None
+        result = calculate_nutrition(dish_name, ingredient_list)
+        return result
+    except Exception as e:
+        raise HTTPException(
+            status_code=500,
+            detail=f"Error al calcular nutrición: {str(e)}"
+        )
+
+
+@app.get("/compare")
+async def compare_two_dishes(
+    dish1_name: str,
+    dish1_ingredients: str,
+    dish2_name: str,
+    dish2_ingredients: str
+):
+    """
+    Compara dos platos usando el agente.
+    
+    Args:
+        dish1_name: Nombre del primer plato
+        dish1_ingredients: Ingredientes del primer plato (separados por coma)
+        dish2_name: Nombre del segundo plato
+        dish2_ingredients: Ingredientes del segundo plato (separados por coma)
+    """
+    try:
+        dish1_ing_list = [i.strip() for i in dish1_ingredients.split(",")]
+        dish2_ing_list = [i.strip() for i in dish2_ingredients.split(",")]
+        
+        result = compare_dishes(
+            dish1_name, dish1_ing_list,
+            dish2_name, dish2_ing_list
+        )
+        return result
+    except Exception as e:
+        raise HTTPException(
+            status_code=500,
+            detail=f"Error al comparar platos: {str(e)}"
         )
 
 
@@ -150,10 +178,14 @@ async def analyze_food(file: UploadFile = File(...)):
 def root():
     """Endpoint raíz con información de la API"""
     return {
-        "message": "Food Analyzer API",
-        "version": "1.0",
+        "message": "Food Analyzer Agent API",
+        "version": "3.0.0",
+        "description": "API con agente inteligente DSPy",
         "endpoints": {
-            "POST /analyze_food": "Analiza una imagen de comida y devuelve receta y datos curiosos"
+            "POST /analyze_food": "Analiza una imagen de comida",
+            "GET /substitutes": "Obtiene sustitutos para ingredientes",
+            "GET /nutrition/{dish_name}": "Calcula información nutricional",
+            "GET /compare": "Compara dos platos"
         }
     }
 
