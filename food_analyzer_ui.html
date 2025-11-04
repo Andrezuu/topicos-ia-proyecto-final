@@ -86,16 +86,30 @@
         
         <!-- Tab 4: Comparar Platos -->
         <div id="compare-tab" class="tab-content">
-            <h2>⚖️ Comparar Dos Platos</h2>
-            <h3>Plato 1</h3>
-            <input type="text" id="dish1Name" placeholder="Nombre del primer plato">
-            <textarea id="dish1Ingredients" placeholder="Ingredientes (separados por coma)" rows="3"></textarea>
+            <h2>⚖️ Comparar Dos Platos Guardados</h2>
+            <p style="color: #666; margin-bottom: 20px;">Selecciona dos análisis guardados para comparar</p>
             
-            <h3>Plato 2</h3>
-            <input type="text" id="dish2Name" placeholder="Nombre del segundo plato">
-            <textarea id="dish2Ingredients" placeholder="Ingredientes (separados por coma)" rows="3"></textarea>
+            <button class="btn-secondary" onclick="loadAnalysesForComparison()">🔄 Cargar Análisis Guardados</button>
             
-            <button class="btn" onclick="compareDishes()">Comparar Platos</button>
+            <div style="display: flex; gap: 20px; margin-top: 20px;">
+                <div style="flex: 1;">
+                    <h3>Plato 1</h3>
+                    <select id="analysis1Select" style="width: 100%; padding: 12px; border: 2px solid #e0e0e0; border-radius: 8px; font-size: 16px;">
+                        <option value="">Selecciona un plato...</option>
+                    </select>
+                    <div id="analysis1Preview" style="margin-top: 10px; padding: 10px; background: #f9f9f9; border-radius: 5px; display: none;"></div>
+                </div>
+                
+                <div style="flex: 1;">
+                    <h3>Plato 2</h3>
+                    <select id="analysis2Select" style="width: 100%; padding: 12px; border: 2px solid #e0e0e0; border-radius: 8px; font-size: 16px;">
+                        <option value="">Selecciona un plato...</option>
+                    </select>
+                    <div id="analysis2Preview" style="margin-top: 10px; padding: 10px; background: #f9f9f9; border-radius: 5px; display: none;"></div>
+                </div>
+            </div>
+            
+            <button class="btn" onclick="compareDishes()" style="margin-top: 20px;">Comparar Platos</button>
             <div id="compareLoading" style="display: none;" class="loading">
                 <div class="spinner"></div>
                 <p style="margin-top: 20px; color: #667eea;">Comparando platos...</p>
@@ -437,17 +451,89 @@
         }
         
         // ============= TAB 4: COMPARAR =============
+        let availableAnalyses = [];
+        
+        async function loadAnalysesForComparison() {
+            try {
+                const response = await fetch('http://localhost:8000/history?limit=50');
+                if (!response.ok) throw new Error(`Error ${response.status}`);
+                
+                const data = await response.json();
+                availableAnalyses = data.history;
+                
+                const select1 = document.getElementById('analysis1Select');
+                const select2 = document.getElementById('analysis2Select');
+                
+                // Limpiar selects
+                select1.innerHTML = '<option value="">Selecciona un plato...</option>';
+                select2.innerHTML = '<option value="">Selecciona un plato...</option>';
+                
+                // Llenar con opciones
+                availableAnalyses.forEach(analysis => {
+                    const option1 = document.createElement('option');
+                    option1.value = analysis.id;
+                    option1.textContent = `${analysis.dish_name} (ID: ${analysis.id})`;
+                    select1.appendChild(option1);
+                    
+                    const option2 = document.createElement('option');
+                    option2.value = analysis.id;
+                    option2.textContent = `${analysis.dish_name} (ID: ${analysis.id})`;
+                    select2.appendChild(option2);
+                });
+                
+                alert(`✅ ${availableAnalyses.length} análisis cargados`);
+                
+            } catch (err) {
+                alert(`Error al cargar análisis: ${err.message}`);
+            }
+        }
+        
+        // Preview al seleccionar
+        document.addEventListener('DOMContentLoaded', () => {
+            const select1 = document.getElementById('analysis1Select');
+            const select2 = document.getElementById('analysis2Select');
+            
+            // Cargar análisis disponibles
+            loadAnalysesForComparison();
+            
+            select1?.addEventListener('change', (e) => {
+                const preview = document.getElementById('analysis1Preview');
+                const analysis = availableAnalyses.find(a => a.id == e.target.value);
+                if (analysis) {
+                    preview.innerHTML = `<strong>${analysis.dish_name}</strong><br><small>Ingredientes: ${analysis.ingredients.join(', ')}</small>`;
+                    preview.style.display = 'block';
+                } else {
+                    preview.style.display = 'none';
+                }
+            });
+            
+            select2?.addEventListener('change', (e) => {
+                const preview = document.getElementById('analysis2Preview');
+                const analysis = availableAnalyses.find(a => a.id == e.target.value);
+                if (analysis) {
+                    preview.innerHTML = `<strong>${analysis.dish_name}</strong><br><small>Ingredientes: ${analysis.ingredients.join(', ')}</small>`;
+                    preview.style.display = 'block';
+                } else {
+                    preview.style.display = 'none';
+                }
+            });
+        });
+        
         async function compareDishes() {
-            const dish1Name = document.getElementById('dish1Name').value.trim();
-            const dish1Ingredients = document.getElementById('dish1Ingredients').value.trim();
-            const dish2Name = document.getElementById('dish2Name').value.trim();
-            const dish2Ingredients = document.getElementById('dish2Ingredients').value.trim();
+            const analysis1Id = document.getElementById('analysis1Select').value;
+            const analysis2Id = document.getElementById('analysis2Select').value;
             const loading = document.getElementById('compareLoading');
             const errorDiv = document.getElementById('compareError');
             const resultDiv = document.getElementById('compareResult');
             
-            if (!dish1Name || !dish1Ingredients || !dish2Name || !dish2Ingredients) {
-                errorDiv.textContent = 'Por favor completa todos los campos';
+            if (!analysis1Id || !analysis2Id) {
+                errorDiv.textContent = 'Por favor selecciona ambos platos';
+                errorDiv.style.display = 'block';
+                return;
+            }
+            
+            if (analysis1Id === analysis2Id) {
+                errorDiv.textContent = 'Debes seleccionar dos platos diferentes';
                 errorDiv.style.display = 'block';
                 return;
             }
@@ -457,11 +543,7 @@
             resultDiv.innerHTML = '';
             
             try {
-                const url = `http://localhost:8000/compare?` +
-                    `dish1_name=${encodeURIComponent(dish1Name)}&` +
-                    `dish1_ingredients=${encodeURIComponent(dish1Ingredients)}&` +
-                    `dish2_name=${encodeURIComponent(dish2Name)}&` +
-                    `dish2_ingredients=${encodeURIComponent(dish2Ingredients)}`;
+                const url = `http://localhost:8000/compare?analysis_id1=${analysis1Id}&analysis_id2=${analysis2Id}`;
                 
                 const response = await fetch(url);
                 if (!response.ok) throw new Error(`Error ${response.status}`);
@@ -471,17 +553,29 @@
                 
                 let html = `
                     <div class="results">
-                        <h3>⚖️ Comparación: ${dish1Name} vs ${dish2Name}</h3>
+                        <h3>⚖️ Comparación</h3>
+                        <div style="display: flex; gap: 20px; margin-bottom: 20px;">
+                            <div style="flex: 1; background: #f0f0f0; padding: 15px; border-radius: 8px;">
+                                <h4>${data.dish1.name}</h4>
+                                <p style="color: #666; font-size: 14px;">ID: ${data.dish1.id}</p>
+                                <small>${data.dish1.ingredients.join(', ')}</small>
+                            </div>
+                            <div style="flex: 1; background: #f0f0f0; padding: 15px; border-radius: 8px;">
+                                <h4>${data.dish2.name}</h4>
+                                <p style="color: #666; font-size: 14px;">ID: ${data.dish2.id}</p>
+                                <small>${data.dish2.ingredients.join(', ')}</small>
+                            </div>
+                        </div>
                         
                         <div style="background: #f0f0f0; padding: 15px; border-radius: 8px; margin: 15px 0;">
                             <h4>📊 Similitud: ${comp.similarity_score || 'N/A'}%</h4>
                         </div>
                         
                         <h4>🍳 Relación Culinaria</h4>
-                        <p>${comp.culinary_relationship || 'N/A'}</p>
+                        <p style="white-space: pre-wrap;">${comp.culinary_relationship || 'N/A'}</p>
                         
                         <h4>🌍 Contexto Cultural</h4>
-                        <p>${comp.cultural_context || 'N/A'}</p>
+                        <p style="white-space: pre-wrap;">${comp.cultural_context || 'N/A'}</p>
                         
                         <h4>🔍 Diferencias Clave</h4>
                         <ul>
@@ -492,7 +586,11 @@
                         html += `<li>${diff}</li>`;
                     });
                 } else if (typeof comp.key_differences === 'string') {
-                    html += `<li>${comp.key_differences}</li>`;
+                    // Si es un string, intentar dividir por saltos de línea o guiones
+                    const diffs = comp.key_differences.split('\n').filter(d => d.trim());
+                    diffs.forEach(diff => {
+                        html += `<li>${diff.replace(/^[-•]\s*/, '')}</li>`;
+                    });
                 }
                 
                 html += `
@@ -507,7 +605,7 @@
                     html += `
                         <details class="agent-reasoning">
                             <summary>🧠 Ver razonamiento del agente</summary>
-                            <p style="margin-top: 10px;">${data.agent_reasoning}</p>
+                            <p style="margin-top: 10px; white-space: pre-wrap;">${data.agent_reasoning}</p>
                         </details>
                     `;
                 }

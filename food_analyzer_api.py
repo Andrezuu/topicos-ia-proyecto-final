@@ -6,14 +6,18 @@ from pydantic import BaseModel
 from PIL import Image, UnidentifiedImageError
 from dotenv import load_dotenv
 from agent import get_agent
-from tools import get_ingredient_substitutes, calculate_nutrition, compare_dishes
+from tools import get_ingredient_substitutes, calculate_nutrition, compare_dishes_from_db
+import database as db
 
 load_dotenv()
+
+# Initialize database
+db_conn = db.setup_database()
 
 app = FastAPI(
     title="Food Analyzer Agent API",
     version="3.0.0",
-    description="API con agente inteligente DSPy para análisis de comida"
+    description="API con agente inteligente DSPy para análisis de comida con base de datos SQLite"
 )
 
 # Configurar CORS para permitir cualquier origen
@@ -84,6 +88,15 @@ async def analyze_food(file: UploadFile = File(...)):
                 detail=f"Error del agente: {agent_result.get('error', 'Unknown error')}"
             )
         
+        # Guardar en base de datos
+        analysis_id = db.save_analysis(
+            db_conn,
+            dish_name=agent_result["dish_name"],
+            ingredients=agent_result["ingredients"],
+            recipe_steps=agent_result["recipe_steps"],
+            fun_facts=agent_result["fun_facts"]
+        )
+        
         # Retornar resultado estructurado
         return FoodAnalysisResponse(
             nombre_plato=agent_result["dish_name"],
@@ -143,34 +156,61 @@ async def get_nutrition(dish_name: str, ingredients: str = None):
 
 
 @app.get("/compare")
-async def compare_two_dishes(
-    dish1_name: str,
-    dish1_ingredients: str,
-    dish2_name: str,
-    dish2_ingredients: str
-):
+async def compare_two_dishes(analysis_id1: int, analysis_id2: int):
     """
-    Compara dos platos usando el agente.
+    Compara dos platos de la base de datos usando el agente.
     
     Args:
-        dish1_name: Nombre del primer plato
-        dish1_ingredients: Ingredientes del primer plato (separados por coma)
-        dish2_name: Nombre del segundo plato
-        dish2_ingredients: Ingredientes del segundo plato (separados por coma)
+        analysis_id1: ID del primer análisis guardado
+        analysis_id2: ID del segundo análisis guardado
     """
     try:
-        dish1_ing_list = [i.strip() for i in dish1_ingredients.split(",")]
-        dish2_ing_list = [i.strip() for i in dish2_ingredients.split(",")]
-        
-        result = compare_dishes(
-            dish1_name, dish1_ing_list,
-            dish2_name, dish2_ing_list
-        )
+        result = compare_dishes_from_db(analysis_id1, analysis_id2, db_conn)
         return result
     except Exception as e:
         raise HTTPException(
             status_code=500,
             detail=f"Error al comparar platos: {str(e)}"
+        )
+
+
+@app.get("/history")
+async def get_history(limit: int = 10):
+    """
+    Obtiene el historial de análisis de comida.
+    
+    Args:
+        limit: Número máximo de registros a retornar (default: 10)
+    """
+    try:
+        history = db.get_analysis_history(db_conn, limit=limit)
+        return {"history": history, "count": len(history)}
+    except Exception as e:
+        raise HTTPException(
+            status_code=500,
+            detail=f"Error al obtener historial: {str(e)}"
+        )
+
+
+@app.get("/analysis/{analysis_id}")
+async def get_analysis(analysis_id: int):
+    """
+    Obtiene un análisis específico por ID.
+    
+    Args:
+        analysis_id: ID del análisis
+    """
+    try:
+        analysis = db.get_analysis_by_id(db_conn, analysis_id)
+        if not analysis:
+            raise HTTPException(status_code=404, detail="Análisis no encontrado")
+        return analysis
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(
+            status_code=500,
+            detail=f"Error al obtener análisis: {str(e)}"
         )
 
 
@@ -180,13 +220,17 @@ def root():
     return {
         "message": "Food Analyzer Agent API",
         "version": "3.0.0",
-        "description": "API con agente inteligente DSPy",
+        "description": "API con agente inteligente DSPy + Base de datos SQLite",
         "endpoints": {
-            "POST /analyze_food": "Analiza una imagen de comida",
+            "POST /analyze_food": "Analiza una imagen de comida y la guarda en BD",
             "GET /substitutes": "Obtiene sustitutos para ingredientes",
             "GET /nutrition/{dish_name}": "Calcula información nutricional",
-            "GET /compare": "Compara dos platos"
-        }
+            "GET /compare?analysis_id1=X&analysis_id2=Y": "Compara dos platos guardados en BD",
+            "GET /history": "Obtiene historial de análisis guardados",
+            "GET /analysis/{id}": "Obtiene un análisis específico por ID"
+        },
+        "database": "food_analyzer.db",
+        "storage": "Solo análisis de comida"
     }
 
 

@@ -5,11 +5,12 @@ Contains utility functions that the agent uses
 
 from typing import Dict, Any, List
 from agent import get_agent
+import database as db
 
 
 def get_ingredient_substitutes(ingredient: str, context: str = "") -> Dict[str, Any]:
     """
-    Get substitutes for an ingredient using the agent.
+    Get substitutes for an ingredient using the agent (no cache).
     
     Args:
         ingredient: The ingredient to find substitutes for
@@ -35,7 +36,7 @@ def get_ingredient_substitutes(ingredient: str, context: str = "") -> Dict[str, 
 
 def calculate_nutrition(dish_name: str, ingredients: List[str] = None) -> Dict[str, Any]:
     """
-    Calculate nutritional information for a dish using the agent.
+    Calculate nutritional information for a dish using the agent (no cache).
     
     Args:
         dish_name: Name of the dish
@@ -58,28 +59,51 @@ def calculate_nutrition(dish_name: str, ingredients: List[str] = None) -> Dict[s
         raise Exception(f"Agent error: {result.get('error', 'Unknown error')}")
 
 
-def compare_dishes(dish1_name: str, dish1_ingredients: List[str],
-                   dish2_name: str, dish2_ingredients: List[str]) -> Dict[str, Any]:
+def compare_dishes_from_db(analysis_id1: int, analysis_id2: int, conn) -> Dict[str, Any]:
     """
-    Compare two dishes using the agent.
+    Compare two dishes from the database using the agent.
     
     Args:
-        dish1_name: Name of first dish
-        dish1_ingredients: Ingredients of first dish
-        dish2_name: Name of second dish
-        dish2_ingredients: Ingredients of second dish
+        analysis_id1: ID of first analysis
+        analysis_id2: ID of second analysis
+        conn: Database connection
     
     Returns:
         Dictionary with comparison and agent reasoning
     """
+    # Get both analyses from database
+    analysis1 = db.get_analysis_by_id(conn, analysis_id1)
+    analysis2 = db.get_analysis_by_id(conn, analysis_id2)
+    
+    if not analysis1:
+        raise Exception(f"Análisis con ID {analysis_id1} no encontrado")
+    if not analysis2:
+        raise Exception(f"Análisis con ID {analysis_id2} no encontrado")
+    
+    # Use agent to compare
     agent = get_agent()
-    result = agent.compare(dish1_name, dish1_ingredients, dish2_name, dish2_ingredients)
+    result = agent.compare(
+        analysis1["dish_name"],
+        analysis1["ingredients"],
+        analysis2["dish_name"],
+        analysis2["ingredients"]
+    )
     
     if result["success"]:
         return {
+            "dish1": {
+                "id": analysis1["id"],
+                "name": analysis1["dish_name"],
+                "ingredients": analysis1["ingredients"]
+            },
+            "dish2": {
+                "id": analysis2["id"],
+                "name": analysis2["dish_name"],
+                "ingredients": analysis2["ingredients"]
+            },
             "comparison": result["comparison"],
             "agent_reasoning": result.get("agent_reasoning"),
-            "source": "agent"
+            "source": "database"
         }
     else:
         raise Exception(f"Agent error: {result.get('error', 'Unknown error')}")
